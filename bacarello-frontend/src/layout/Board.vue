@@ -66,11 +66,14 @@ function handleAddTask({ columnId, task }: { columnId: string; task: Task }) {
   if (!column) return
   column.tasks.push(task)
 }
+function addColumn({id, name}:{id: string, name: string}){
+    trelloMock.value.push({id:id, name: name, tasks: []})
+}
 </script>
 <template>
     <div class="h-full flex flex-col overflow-hidden">
         <BoardNavbar /> 
-        <BoardCard :tasks="trelloMock" @add-task="handleAddTask"/>
+        <BoardCard :tasks="trelloMock" @add-task="handleAddTask" @add-column="addColumn"/>
     </div>
 
 </template>
