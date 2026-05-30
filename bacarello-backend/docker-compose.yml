@@ -1,3 +1,7 @@
+# Avvia il backend COMPLETO (app Ktor + PostgreSQL) con un solo comando:
+#   docker compose up --build
+# Pensato per il team frontend che NON usa Ktor: non serve Java né Gradle in locale.
+# API disponibile su http://localhost:8080  (health: GET /health)
 services:
   postgres:
     image: postgres:16
@@ -9,6 +13,27 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bacarello -d bacarello"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/bacarello
+      DB_DRIVER: org.postgresql.Driver
+      DB_USER: bacarello
+      DB_PASSWORD: bacarello
+      JWT_SECRET: bacarello-super-secret-change-in-prod
+      # Origini del frontend Vue ammesse dal CORS (Vite dev = 5173, preview = 4173)
+      CORS_ALLOWED_HOSTS: "localhost:5173,localhost:4173"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:

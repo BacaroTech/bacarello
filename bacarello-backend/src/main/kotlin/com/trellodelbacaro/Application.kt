@@ -28,6 +28,8 @@ fun Application.module() {
     val boardService = BoardService(boardRepo)
     val cardService = CardService(cardRepo)
 
+    configureCORS()
+    configureStatusPages()
     configureSerialization()
     configureAuthentication(jwtProvider)
     configureHealthRoutes()
