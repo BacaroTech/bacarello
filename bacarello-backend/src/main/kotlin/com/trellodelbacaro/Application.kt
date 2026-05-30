@@ -22,10 +22,14 @@ fun Application.module() {
     val database = configureDatabase()
 
     val userRepo = ExposedUserRepository(database)
+    val workspaceRepo = ExposedWorkspaceRepository(database)
     val boardRepo = ExposedBoardRepository(database)
+    val listRepo = ExposedListRepository(database)
     val cardRepo = ExposedCardRepository(database)
     val authService = AuthService(userRepo, jwtProvider)
+    val workspaceService = WorkspaceService(workspaceRepo)
     val boardService = BoardService(boardRepo)
+    val listService = ListService(listRepo)
     val cardService = CardService(cardRepo)
 
     configureCORS()
@@ -34,6 +38,8 @@ fun Application.module() {
     configureAuthentication(jwtProvider)
     configureHealthRoutes()
     configureAuthRoutes(authService)
+    configureWorkspaceRoutes(workspaceService)
     configureBoardRoutes(boardService)
+    configureListRoutes(listService)
     configureCardRoutes(cardService)
 }

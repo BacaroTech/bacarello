@@ -14,6 +14,15 @@ import io.ktor.server.routing.*
 fun Application.configureCardRoutes(cardService: CardService) {
     routing {
         authenticate("auth-jwt") {
+            get("/api/v1/lists/{listId}/cards") {
+                val listId = call.parameters["listId"]?.toLongOrNull()
+                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid listId")
+                when (val r = cardService.findByList(listId)) {
+                    is DomainResult.Success -> call.respond(r.value.map { it.toResponse() })
+                    is DomainResult.Failure -> call.respondFailure(r)
+                }
+            }
+
             post("/api/v1/lists/{listId}/cards") {
                 val listId = call.parameters["listId"]?.toLongOrNull()
                     ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid listId")

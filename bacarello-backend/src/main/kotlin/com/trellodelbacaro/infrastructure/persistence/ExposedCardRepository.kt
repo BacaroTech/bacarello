@@ -23,6 +23,16 @@ class ExposedCardRepository(private val database: Database) : CardRepository {
         }
     }.getOrElse { DomainResult.Failure.InternalError(it) }
 
+    override suspend fun findByList(listId: Long): DomainResult<List<Card>> = runCatching {
+        transaction(database) {
+            DomainResult.Success(
+                Cards.selectAll().where { Cards.listId eq listId }
+                    .orderBy(Cards.position to org.jetbrains.exposed.sql.SortOrder.ASC)
+                    .map { it.toCard() }
+            )
+        }
+    }.getOrElse { DomainResult.Failure.InternalError(it) }
+
     override suspend fun create(listId: Long, card: Card): DomainResult<Card> = runCatching {
         transaction(database) {
             val now = Clock.System.now()

@@ -27,6 +27,20 @@ data class BoardRequest(val workspaceId: Long, val title: String, val color: Str
 @Serializable
 data class BoardResponse(val id: Long, val workspaceId: Long, val title: String, val color: String, val createdAt: Instant?)
 
+// Workspace
+@Serializable
+data class WorkspaceRequest(val name: String)
+
+@Serializable
+data class WorkspaceResponse(val id: Long, val name: String, val ownerId: Long, val createdAt: Instant?)
+
+// List
+@Serializable
+data class ListRequest(val name: String, val position: Int = 0)
+
+@Serializable
+data class ListResponse(val id: Long, val boardId: Long, val name: String, val position: Int)
+
 // Card
 @Serializable
 data class CardRequest(val title: String, val description: String? = null, val position: Int, val dueDate: Instant? = null)
