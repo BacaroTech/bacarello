@@ -4,7 +4,8 @@
 # API disponibile su http://localhost:8080  (health: GET /health)
 services:
   postgres:
-    image: postgres:16
+    # 17: allineato al volume già inizializzato in locale (un PG 16 non può aprire dati creati da PG 17).
+    image: postgres:17
     environment:
       POSTGRES_DB: bacarello
       POSTGRES_USER: bacarello

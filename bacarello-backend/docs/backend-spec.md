@@ -525,7 +525,7 @@ Cards have: labels, dueDate, assignees, checklist items
 version: '3.8'
 services:
   postgres:
-    image: postgres:16
+    image: postgres:17
     environment:
       POSTGRES_DB: bacarello
       POSTGRES_USER: bacarello
