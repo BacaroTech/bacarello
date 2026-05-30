@@ -1,0 +1,13 @@
+ktor:
+  development: false
+  deployment:
+    port: 8080
+  application:
+    modules:
+      - com.trellodelbacaro.ApplicationKt.module
+
+jwt:
+  secret: "bacarello-super-secret-change-in-prod"
+  issuer: "bacarello"
+  audience: "bacarello-users"
+  realm: "Bacarello API"
