@@ -1,0 +1,315 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Bacarello Backend API",
+    "version": "0.0.1",
+    "description": "Contratto REST EFFETTIVAMENTE implementato dal backend Ktor (MVP). Modello di dominio Workspace → Board → List → Card. Id numerici (Long). Timestamp ISO-8601 UTC. Auth JWT Bearer su tutto tranne /health e /api/v1/auth/**. Per la mappatura verso il modello del frontend Vue (BoardView/Column/Task) e le differenze con lo swagger-draft frontend (string id, label board-scoped) vedi docs/openapi-frontend-mapping.md."
+  },
+  "servers": [
+    { "url": "http://localhost:8080", "description": "Dev locale (H2 o docker-compose con PostgreSQL)" }
+  ],
+  "tags": [
+    { "name": "Health" },
+    { "name": "Auth" },
+    { "name": "Boards" },
+    { "name": "Cards" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Liveness check",
+        "operationId": "health",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Servizio attivo",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HealthResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Crea un account",
+        "operationId": "register",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RegisterRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Utente creato", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserResponse" } } } },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login, restituisce un JWT",
+        "operationId": "login",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Token JWT", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponse" } } } },
+          "401": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/v1/boards": {
+      "get": {
+        "tags": ["Boards"],
+        "summary": "Elenca le board",
+        "operationId": "listBoards",
+        "responses": {
+          "200": { "description": "Elenco board", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/BoardResponse" } } } } },
+          "401": { "$ref": "#/components/responses/Error" }
+        }
+      },
+      "post": {
+        "tags": ["Boards"],
+        "summary": "Crea una board",
+        "operationId": "createBoard",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BoardRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Board creata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BoardResponse" } } } },
+          "400": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/v1/boards/{id}": {
+      "parameters": [{ "$ref": "#/components/parameters/IdPath" }],
+      "get": {
+        "tags": ["Boards"],
+        "summary": "Dettaglio board",
+        "operationId": "getBoard",
+        "responses": {
+          "200": { "description": "Board", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BoardResponse" } } } },
+          "401": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      },
+      "put": {
+        "tags": ["Boards"],
+        "summary": "Aggiorna una board",
+        "operationId": "updateBoard",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BoardRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Board aggiornata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BoardResponse" } } } },
+          "401": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      },
+      "delete": {
+        "tags": ["Boards"],
+        "summary": "Elimina una board",
+        "operationId": "deleteBoard",
+        "responses": {
+          "204": { "description": "Eliminata" },
+          "401": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/v1/lists/{listId}/cards": {
+      "parameters": [{ "name": "listId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+      "post": {
+        "tags": ["Cards"],
+        "summary": "Crea una card nella lista",
+        "operationId": "createCard",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CardRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Card creata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CardResponse" } } } },
+          "400": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/v1/cards/{id}": {
+      "parameters": [{ "$ref": "#/components/parameters/IdPath" }],
+      "get": {
+        "tags": ["Cards"],
+        "summary": "Dettaglio card",
+        "operationId": "getCard",
+        "responses": {
+          "200": { "description": "Card", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CardResponse" } } } },
+          "401": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      },
+      "put": {
+        "tags": ["Cards"],
+        "summary": "Aggiorna una card",
+        "operationId": "updateCard",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CardRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Card aggiornata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CardResponse" } } } },
+          "401": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      },
+      "delete": {
+        "tags": ["Cards"],
+        "summary": "Elimina una card",
+        "operationId": "deleteCard",
+        "responses": {
+          "204": { "description": "Eliminata" },
+          "401": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/v1/cards/{id}/move": {
+      "parameters": [{ "$ref": "#/components/parameters/IdPath" }],
+      "put": {
+        "tags": ["Cards"],
+        "summary": "Sposta una card in un'altra lista / posizione",
+        "operationId": "moveCard",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MoveCardRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Card spostata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CardResponse" } } } },
+          "401": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "parameters": {
+      "IdPath": { "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }
+    },
+    "responses": {
+      "Error": {
+        "description": "Errore",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      }
+    },
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "required": ["status"],
+        "properties": { "status": { "type": "string", "example": "ok" } }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["email", "displayName", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email", "example": "m@bacaro.it" },
+          "displayName": { "type": "string", "example": "Michele" },
+          "password": { "type": "string", "format": "password", "example": "secret123" }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "format": "password" }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "required": ["token", "expiresAt"],
+        "properties": {
+          "token": { "type": "string", "description": "JWT Bearer" },
+          "expiresAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "required": ["id", "email", "displayName", "createdAt"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "email": { "type": "string", "format": "email" },
+          "displayName": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "BoardRequest": {
+        "type": "object",
+        "required": ["workspaceId", "title"],
+        "properties": {
+          "workspaceId": { "type": "integer", "format": "int64" },
+          "title": { "type": "string", "example": "Sprint Board" },
+          "color": { "type": "string", "default": "#0079BF", "example": "#0079BF" }
+        }
+      },
+      "BoardResponse": {
+        "type": "object",
+        "required": ["id", "workspaceId", "title", "color"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "workspaceId": { "type": "integer", "format": "int64" },
+          "title": { "type": "string" },
+          "color": { "type": "string", "example": "#0079BF" },
+          "createdAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "CardRequest": {
+        "type": "object",
+        "required": ["title", "position"],
+        "properties": {
+          "title": { "type": "string", "example": "Implement auth" },
+          "description": { "type": "string", "nullable": true },
+          "position": { "type": "integer", "example": 0 },
+          "dueDate": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "CardResponse": {
+        "type": "object",
+        "required": ["id", "listId", "title", "position"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "listId": { "type": "integer", "format": "int64" },
+          "title": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "position": { "type": "integer" },
+          "dueDate": { "type": "string", "format": "date-time", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "MoveCardRequest": {
+        "type": "object",
+        "required": ["listId", "position"],
+        "properties": {
+          "listId": { "type": "integer", "format": "int64", "description": "Lista di destinazione" },
+          "position": { "type": "integer", "description": "Nuova posizione (index-based)" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["error", "message"],
+        "properties": {
+          "error": { "type": "string", "enum": ["NOT_FOUND", "VALIDATION_ERROR", "UNAUTHORIZED", "FORBIDDEN", "INTERNAL_ERROR"], "example": "NOT_FOUND" },
+          "message": { "type": "string" },
+          "details": { "type": "object", "additionalProperties": { "type": "string" } }
+        }
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }]
+}

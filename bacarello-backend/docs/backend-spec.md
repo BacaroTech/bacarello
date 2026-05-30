@@ -559,3 +559,22 @@ Per rispettare il vincolo temporale, implementare nell'ordine:
 | **P2** | **Docker Compose prod** | **fuori scope MVP** |
 
 > **P2 va implementato** prima di collegare il frontend reale. Il MVP in 40 min è sufficiente per sviluppo e test locali con H2.
+
+---
+
+## 11. Contratto OpenAPI e integrazione frontend
+
+- **`docs/openapi.json`** — specifica OpenAPI 3.0.3 del contratto **realmente implementato** (MVP). È la fonte autoritativa per il team frontend (importabile in Swagger UI / generabile in tipi TS con `openapi-typescript`).
+- **`docs/openapi-frontend-mapping.md`** — come consumare l'API dal frontend Vue e differenze rispetto allo swagger-draft creato lato frontend (`bacarello-frontend/openapi/swagger.json`): id `Long` vs `string`, radice `Workspace`, `position` intero vs `pos` float, label/checklist ancora in P2.
+
+## 12. Avvio per il team frontend (Docker, senza Ktor/Gradle in locale)
+
+```bash
+cd bacarello-backend
+docker compose up --build      # avvia app Ktor + PostgreSQL insieme
+# API: http://localhost:8080  ·  health: GET /health
+```
+
+Variabili d'ambiente lette dall'app (vedi `api/plugins/Database.kt` e `docker-compose.yml`):
+`DB_URL`, `DB_DRIVER`, `DB_USER`, `DB_PASSWORD`, `DB_POOL_SIZE`, `JWT_SECRET`, `CORS_ALLOWED_HOSTS`.
+Senza queste env il backend usa H2 in-memory (sviluppo locale con `./gradlew run`).
