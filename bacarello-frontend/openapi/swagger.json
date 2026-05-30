@@ -1,0 +1,568 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Bacarello API",
+    "version": "1.0.0",
+    "description": "Contratto REST del clone Trello 'bacarello'. Modella il dominio usato dal frontend (Board → List → Card, con Checklist e Label board-scoped). I campi delle request di create/move sono ispirati alle catture in json-example (idList, pos, dueComplete) ma normalizzati al dominio dell'app. Tutti gli id sono stringhe; i timestamp sono ISO-8601 UTC."
+  },
+  "servers": [
+    { "url": "http://localhost:8080/api/v1", "description": "Dev locale" }
+  ],
+  "security": [{ "bearerAuth": [] }],
+  "tags": [
+    { "name": "Boards" },
+    { "name": "Lists" },
+    { "name": "Cards" },
+    { "name": "Labels" },
+    { "name": "Checklists" }
+  ],
+  "paths": {
+    "/boards": {
+      "get": {
+        "tags": ["Boards"],
+        "summary": "Elenca le board dell'utente",
+        "operationId": "listBoards",
+        "responses": {
+          "200": {
+            "description": "Elenco board",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Board" } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Boards"],
+        "summary": "Crea una board",
+        "operationId": "createBoard",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateBoardRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Board creata",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Board" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/boards/{boardId}": {
+      "parameters": [{ "$ref": "#/components/parameters/BoardId" }],
+      "get": {
+        "tags": ["Boards"],
+        "summary": "Dettaglio board con liste e card annidate",
+        "operationId": "getBoard",
+        "responses": {
+          "200": {
+            "description": "Board con liste e card",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BoardDetail" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "patch": {
+        "tags": ["Boards"],
+        "summary": "Aggiorna una board",
+        "operationId": "updateBoard",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateBoardRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Board aggiornata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Board" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Boards"],
+        "summary": "Elimina una board",
+        "operationId": "deleteBoard",
+        "responses": {
+          "204": { "description": "Eliminata" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/boards/{boardId}/lists": {
+      "parameters": [{ "$ref": "#/components/parameters/BoardId" }],
+      "get": {
+        "tags": ["Lists"],
+        "summary": "Elenca le liste di una board",
+        "operationId": "listLists",
+        "responses": {
+          "200": {
+            "description": "Elenco liste",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/List" } } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "tags": ["Lists"],
+        "summary": "Crea una lista nella board",
+        "operationId": "createList",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateListRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Lista creata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/List" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/lists/{listId}": {
+      "parameters": [{ "$ref": "#/components/parameters/ListId" }],
+      "patch": {
+        "tags": ["Lists"],
+        "summary": "Aggiorna una lista (rinomina, sposta, archivia)",
+        "operationId": "updateList",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateListRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Lista aggiornata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/List" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Lists"],
+        "summary": "Elimina una lista",
+        "operationId": "deleteList",
+        "responses": {
+          "204": { "description": "Eliminata" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/lists/{listId}/cards": {
+      "parameters": [{ "$ref": "#/components/parameters/ListId" }],
+      "get": {
+        "tags": ["Cards"],
+        "summary": "Elenca le card di una lista",
+        "operationId": "listCards",
+        "responses": {
+          "200": {
+            "description": "Elenco card",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Card" } } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "tags": ["Cards"],
+        "summary": "Crea una card nella lista",
+        "operationId": "createCard",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateCardRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Card creata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Card" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/cards/{cardId}": {
+      "parameters": [{ "$ref": "#/components/parameters/CardId" }],
+      "get": {
+        "tags": ["Cards"],
+        "summary": "Dettaglio card (con checklist e label risolte)",
+        "operationId": "getCard",
+        "responses": {
+          "200": { "description": "Card", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CardDetail" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "patch": {
+        "tags": ["Cards"],
+        "summary": "Aggiorna una card",
+        "operationId": "updateCard",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateCardRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Card aggiornata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Card" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Cards"],
+        "summary": "Elimina una card",
+        "operationId": "deleteCard",
+        "responses": {
+          "204": { "description": "Eliminata" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/cards/{cardId}/move": {
+      "parameters": [{ "$ref": "#/components/parameters/CardId" }],
+      "post": {
+        "tags": ["Cards"],
+        "summary": "Sposta/riordina una card (cambio lista e/o posizione)",
+        "description": "Ispirato a jsonChangeList.json (idList + pos). Vedi MoveCardRequest per la strategia di posizionamento.",
+        "operationId": "moveCard",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MoveCardRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Card spostata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Card" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/boards/{boardId}/labels": {
+      "parameters": [{ "$ref": "#/components/parameters/BoardId" }],
+      "get": {
+        "tags": ["Labels"],
+        "summary": "Elenca le label riusabili della board",
+        "operationId": "listLabels",
+        "responses": {
+          "200": { "description": "Elenco label", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Label" } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Labels"],
+        "summary": "Crea una label nella board",
+        "operationId": "createLabel",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateLabelRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Label creata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Label" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/cards/{cardId}/checklists": {
+      "parameters": [{ "$ref": "#/components/parameters/CardId" }],
+      "post": {
+        "tags": ["Checklists"],
+        "summary": "Aggiunge una checklist alla card",
+        "operationId": "createChecklist",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateChecklistRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Checklist creata", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Checklist" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/checklists/{checklistId}/items": {
+      "parameters": [{ "$ref": "#/components/parameters/ChecklistId" }],
+      "post": {
+        "tags": ["Checklists"],
+        "summary": "Aggiunge un item a una checklist",
+        "operationId": "createChecklistItem",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateChecklistItemRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Item creato", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChecklistItem" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/checklists/{checklistId}/items/{itemId}": {
+      "parameters": [
+        { "$ref": "#/components/parameters/ChecklistId" },
+        { "$ref": "#/components/parameters/ItemId" }
+      ],
+      "patch": {
+        "tags": ["Checklists"],
+        "summary": "Aggiorna un item (testo o spunta)",
+        "operationId": "updateChecklistItem",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateChecklistItemRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Item aggiornato", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChecklistItem" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Checklists"],
+        "summary": "Elimina un item",
+        "operationId": "deleteChecklistItem",
+        "responses": {
+          "204": { "description": "Eliminato" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "parameters": {
+      "BoardId": { "name": "boardId", "in": "path", "required": true, "schema": { "type": "string" } },
+      "ListId": { "name": "listId", "in": "path", "required": true, "schema": { "type": "string" } },
+      "CardId": { "name": "cardId", "in": "path", "required": true, "schema": { "type": "string" } },
+      "ChecklistId": { "name": "checklistId", "in": "path", "required": true, "schema": { "type": "string" } },
+      "ItemId": { "name": "itemId", "in": "path", "required": true, "schema": { "type": "string" } }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Richiesta non valida",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Unauthorized": {
+        "description": "Token JWT mancante o non valido",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "NotFound": {
+        "description": "Risorsa non trovata",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    },
+    "schemas": {
+      "Board": {
+        "type": "object",
+        "required": ["id", "title"],
+        "properties": {
+          "id": { "type": "string", "example": "699988b291c6a8a0de08b868" },
+          "title": { "type": "string", "example": "Bacaro" },
+          "label": { "type": "string", "nullable": true, "description": "Sottotitolo/etichetta libera (frontend BoardView.label)", "example": "Bacaro Test" },
+          "owner": { "type": "string", "nullable": true, "description": "Id utente proprietario" }
+        }
+      },
+      "BoardDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Board" },
+          {
+            "type": "object",
+            "properties": {
+              "lists": { "type": "array", "items": { "$ref": "#/components/schemas/ListWithCards" } },
+              "labels": { "type": "array", "items": { "$ref": "#/components/schemas/Label" } }
+            }
+          }
+        ]
+      },
+      "List": {
+        "type": "object",
+        "required": ["id", "boardId", "name"],
+        "properties": {
+          "id": { "type": "string", "example": "6a1add5f8a85e1cb0b600290" },
+          "boardId": { "type": "string", "example": "699988b291c6a8a0de08b868" },
+          "name": { "type": "string", "example": "To Do" },
+          "pos": { "type": "number", "format": "double", "description": "Posizione ordinale (stile Trello, float)", "example": 140737488420864 },
+          "closed": { "type": "boolean", "default": false, "description": "Archiviata" }
+        }
+      },
+      "ListWithCards": {
+        "allOf": [
+          { "$ref": "#/components/schemas/List" },
+          {
+            "type": "object",
+            "properties": {
+              "cards": { "type": "array", "items": { "$ref": "#/components/schemas/Card" } }
+            }
+          }
+        ]
+      },
+      "Card": {
+        "type": "object",
+        "required": ["id", "listId", "title"],
+        "properties": {
+          "id": { "type": "string", "example": "task-1" },
+          "listId": { "type": "string", "example": "6a1add5f8a85e1cb0b600290" },
+          "title": { "type": "string", "example": "Design login page" },
+          "description": { "type": "string", "nullable": true, "example": "Create responsive UI for login" },
+          "labelIds": { "type": "array", "items": { "type": "string" }, "description": "Riferimenti alle Label board-scoped (frontend Task.labels)" },
+          "completed": { "type": "boolean", "default": false },
+          "dueDate": { "type": "string", "format": "date-time", "nullable": true, "description": "Scadenza ISO-8601 UTC (frontend Task.endTask)", "example": "2026-02-20T00:00:00Z" },
+          "dueComplete": { "type": "boolean", "default": false, "description": "Scadenza segnata come completata (json-example: dueComplete)" },
+          "assigneeIds": { "type": "array", "items": { "type": "string" }, "description": "Id membri assegnati" },
+          "pos": { "type": "number", "format": "double", "example": 140737488355328 }
+        }
+      },
+      "CardDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Card" },
+          {
+            "type": "object",
+            "properties": {
+              "labels": { "type": "array", "items": { "$ref": "#/components/schemas/Label" }, "description": "Label risolte (oggetti completi, non solo id)" },
+              "checklists": { "type": "array", "items": { "$ref": "#/components/schemas/Checklist" } }
+            }
+          }
+        ]
+      },
+      "Label": {
+        "type": "object",
+        "required": ["id", "color"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string", "description": "Può essere vuota (label di solo colore)", "example": "design" },
+          "color": { "type": "string", "description": "Classe colore Tailwind usata dal frontend (LabelItem.color)", "example": "bg-green-500" }
+        }
+      },
+      "Checklist": {
+        "type": "object",
+        "required": ["id", "label"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string", "description": "Titolo della checklist (frontend CheckList.label)", "example": "prova" },
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/ChecklistItem" } }
+        }
+      },
+      "ChecklistItem": {
+        "type": "object",
+        "required": ["id", "label"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string", "example": "First task" },
+          "checked": { "type": "boolean", "default": false }
+        }
+      },
+      "CreateBoardRequest": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": { "type": "string" },
+          "label": { "type": "string", "nullable": true }
+        }
+      },
+      "UpdateBoardRequest": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "label": { "type": "string", "nullable": true }
+        }
+      },
+      "CreateListRequest": {
+        "type": "object",
+        "required": ["name"],
+        "description": "Ispirato a jsonPostLiReqEx.json (idBoard ricavato dal path, name, pos).",
+        "properties": {
+          "name": { "type": "string", "example": "prova" },
+          "pos": { "type": "number", "format": "double", "description": "Opzionale; se omesso il backend appende in coda", "example": 140737488420864 }
+        }
+      },
+      "UpdateListRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "pos": { "type": "number", "format": "double" },
+          "closed": { "type": "boolean" }
+        }
+      },
+      "CreateCardRequest": {
+        "type": "object",
+        "required": ["title"],
+        "description": "Ispirato a jsonAddCardReqEx.json (idList ricavato dal path, name→title, desc→description, pos, dueComplete).",
+        "properties": {
+          "title": { "type": "string", "example": "test" },
+          "description": { "type": "string", "nullable": true },
+          "pos": { "type": "number", "format": "double", "description": "Opzionale; se omesso appende in coda" },
+          "dueDate": { "type": "string", "format": "date-time", "nullable": true },
+          "labelIds": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "UpdateCardRequest": {
+        "type": "object",
+        "description": "Tutti i campi opzionali (PATCH parziale).",
+        "properties": {
+          "title": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "completed": { "type": "boolean" },
+          "dueDate": { "type": "string", "format": "date-time", "nullable": true },
+          "dueComplete": { "type": "boolean" },
+          "labelIds": { "type": "array", "items": { "type": "string" } },
+          "assigneeIds": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "MoveCardRequest": {
+        "type": "object",
+        "description": "Sposta una card. Strategia di default: float pos stile Trello (idList→listId, pos da jsonChangeList.json). Vedi il TODO in src/types/api.ts per l'alternativa index-based.",
+        "properties": {
+          "listId": { "type": "string", "description": "Lista di destinazione; se omessa resta nella stessa lista" },
+          "pos": { "type": "number", "format": "double", "description": "Nuova posizione (float). Il backend può anche accettare i valori speciali stile Trello 'top'/'bottom'." }
+        }
+      },
+      "CreateLabelRequest": {
+        "type": "object",
+        "required": ["color"],
+        "properties": {
+          "name": { "type": "string" },
+          "color": { "type": "string", "example": "bg-green-500" }
+        }
+      },
+      "CreateChecklistRequest": {
+        "type": "object",
+        "required": ["label"],
+        "properties": {
+          "label": { "type": "string", "example": "prova" }
+        }
+      },
+      "CreateChecklistItemRequest": {
+        "type": "object",
+        "required": ["label"],
+        "properties": {
+          "label": { "type": "string" }
+        }
+      },
+      "UpdateChecklistItemRequest": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string" },
+          "checked": { "type": "boolean" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["error", "message"],
+        "description": "Forma di errore canonica del progetto (vedi CLAUDE.md).",
+        "properties": {
+          "error": { "type": "string", "example": "VALIDATION_ERROR" },
+          "message": { "type": "string", "example": "title must not be blank" },
+          "details": { "type": "object", "additionalProperties": true }
+        }
+      }
+    }
+  }
+}
