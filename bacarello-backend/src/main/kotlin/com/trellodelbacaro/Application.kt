@@ -23,13 +23,15 @@ fun Application.module() {
 
     val userRepo = ExposedUserRepository(database)
     val boardRepo = ExposedBoardRepository(database)
+    val cardRepo = ExposedCardRepository(database)
     val authService = AuthService(userRepo, jwtProvider)
     val boardService = BoardService(boardRepo)
+    val cardService = CardService(cardRepo)
 
     configureSerialization()
     configureAuthentication(jwtProvider)
     configureHealthRoutes()
     configureAuthRoutes(authService)
     configureBoardRoutes(boardService)
-    // configureCardRoutes viene aggiunto nel Task 8
+    configureCardRoutes(cardService)
 }
