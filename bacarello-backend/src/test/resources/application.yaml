@@ -1,0 +1,8 @@
+ktor:
+  development: false
+
+jwt:
+  secret: "bacarello-super-secret-change-in-prod"
+  issuer: "bacarello"
+  audience: "bacarello-users"
+  realm: "Bacarello API"
