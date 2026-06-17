@@ -2,13 +2,14 @@
 import draggable from 'vuedraggable'
 import { Plus, X } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
-import type { Task, Column } from '../layout/Board.vue';
+import type { Task, Column } from '../stores/mainCardList.ts';
 import Button from './ui/button/Button.vue';
 import { useRouter } from 'vue-router';
 const addNewToggle = ref<string | undefined>()
 const newTaskTitle = ref<string>('')
 const tasksProp = defineProps<{ tasks: Column[] }>()
 import { useCardCheckList, type LabelItem } from '@/stores/card';
+import editInputComponent from './editInputComponent.vue';
 const { selectedLabels } = useCardCheckList()
 const router = useRouter()
 const emit = defineEmits<{
@@ -76,16 +77,7 @@ function saveColumnName(column: Column) {
 <template>
     <ol class="flex gap-6 mt-3 overflow-x-auto overflow-y-hidden">
         <li v-for="column in tasksProp.tasks" :key="column.id" class="w-64 bg-muted p-4 rounded-xl shrink-0 h-auto">
-            <div class="mb-3">
-                <h3 v-if="!columnInputToggle[column.id]"
-                    class="font-semibold px-2 py-1 rounded cursor-pointer hover:bg-accent"
-                    @click="openColumnEdit(column)">
-                    {{ column.name }}
-                </h3>
-                <textarea v-else v-model="editableColumnNames[column.id]"
-                    class="w-full resize-none rounded p-2 outline-none border bg-background" rows="1" autofocus
-                    @blur="saveColumnName(column)" @keydown.enter.prevent="saveColumnName(column)" />
-            </div>
+            <editInputComponent v-model="column.name" @save="saveColumnName(column)"  />
             <draggable v-model="column.tasks" group="tasks" item-key="id" class="space-y-2 cursor-pointer">
                 <template #item="{ element }">
                     <div class="bg-background p-3 rounded-lg shadow-sm" @click="openCardDetail(element)">

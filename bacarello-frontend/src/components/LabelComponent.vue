@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { SquarePen, Check } from 'lucide-vue-next';
 const props = defineProps(['open', 'colorVal', 'list'])
 import { useCardCheckList, type LabelItem } from '@/stores/card';
-const { addLabel } = useCardCheckList()
+const { addLabel, updateLabel } = useCardCheckList()
 import { Label } from './ui/label';
 import { computed, ref } from 'vue';
 import Input from './ui/input/Input.vue';
@@ -32,18 +32,43 @@ const colors = ref<LabelItem[]>([
     { name: '', color: 'bg-violet-700', checked: false }
 ])
 const selectedColor = ref<LabelItem>({ color: '', name: '' })
+const editingLabel = ref<LabelItem | null>(null)
 function toggleColor(label: LabelItem) {
-    label.checked = !label.checked
-    if (selectedColor.value && selectedColor.value.color == '') {
-        selectedColor.value.color = label.color
-    } else {
-        selectedColor.value.color = ''
-    }
+    colors.value.forEach(color => {
+        color.checked = false
+    })
+
+    label.checked = true
+
+    selectedColor.value.color = label.color
 }
-function save(taskId: string){
-    if(taskId == "" && selectedColor.value.color == "") return
-    addLabel(selectedColor.value, taskId)
+const originalColor = ref('')
+function editLabel(label: LabelItem, open: any) {
+    editingLabel.value = label
+    originalColor.value = label.color
+
+    selectedColor.value = { ...label }
+
+    colors.value.forEach(color => {
+        color.checked = color.color === label.color
+    })
+
+    open.editLabel = true
 }
+function save(taskId: string) {
+    if (!editingLabel.value || !originalColor.value) return
+    editingLabel.value.name = selectedColor.value.name
+    editingLabel.value.color = selectedColor.value.color
+
+    updateLabel(
+        originalColor.value,
+        selectedColor.value,
+        taskId
+    )
+
+    props.open.editLabel = false
+}
+
 </script>
 <template>
     <div>
@@ -59,7 +84,7 @@ function save(taskId: string){
                             class="w-full border h-auto rounded-sm cursor-pointer"></span>
                     </div>
                     <div class="hover:bg-gray-400 rounded-xs cursor-pointer">
-                        <SquarePen class="h-4 mt-1 " @click="open.editLabel = true" />
+                        <SquarePen class="h-4 mt-1 " @click="editLabel(color, open)" />
                     </div>
                 </div>
             </div>

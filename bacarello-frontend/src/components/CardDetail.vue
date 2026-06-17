@@ -24,15 +24,24 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { Ref } from 'vue'
 import Label from './ui/label/Label.vue'
 const { addItem, colorVal, addLabel, selectedLabels } = useCardCheckList()
 const router = useRouter()
 const route = useRoute()
+import { useTrelloList } from '@/stores/mainCardList.ts'
+const { trelloMock } = useTrelloList()
+import editInputComponent from './editInputComponent.vue'
 function close() {
     router.push({ name: 'board', params: { id: route.params.id } })
 }
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 const date = ref() as Ref<DateValue>
 const open = ref<Record<string, boolean>>(
@@ -49,8 +58,7 @@ function addItemCheckList(item: CheckModel): void {
     open.value.checkList = false
 }
 const inputVal = ref<CheckModel>({ label: '' })
-
-
+const cardDetail = computed(() => { trelloMock.find(e => e.tasks.find(d => d.id === route.params.cardId)) })
 </script>
 
 <template>
@@ -65,7 +73,7 @@ const inputVal = ref<CheckModel>({ label: '' })
             <Separator />
             <CardContent>
                 <div class="flex flex-col">
-                    <p>{{ $route.params.cardId }}</p>
+                    <editInputComponent :model-value="String(route.params.cardId ?? '')" />
                     <div class="mt-5 space-x-2">
                         <Popover v-model:open="open.date">
                             <PopoverTrigger as-child>
@@ -110,7 +118,7 @@ const inputVal = ref<CheckModel>({ label: '' })
                                 </CardFooter>
                             </PopoverContent>
                         </Popover>
-                        <Popover v-model:open="open.labels">
+                        <Popover v-model:open="open.labels" v-if="selectedLabels.length === 0">
                             <PopoverTrigger as-child>
                                 <Button variant="outline" class="justify-between font-normal items-center">
                                     <Bookmark />
@@ -177,16 +185,49 @@ const inputVal = ref<CheckModel>({ label: '' })
                         <div class="flex flex-col gap-1 items-start" v-show="selectedLabels.length > 0">
                             <label>Labels</label>
                             <div class="flex flex-row items-center gap-0.5">
-                                <div v-for="value in selectedLabels" :class="value.color"
-                                    class="border h-8 w-12 rounded-sm" v-show="value.id === $route.params.cardId"></div>
-                                <SquarePlus @click="open.labels = !open.labels" />
-                                <Popover>
+                                <TooltipProvider>
+                                    <Tooltip v-for="value in selectedLabels" >
+                                        <TooltipTrigger>
+                                            <div class="border h-8 w-12 rounded-sm" :class="value.color"
+                                                v-show="value.id === $route.params.cardId">
+                                            </div>
+
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            {{ `Color: ${value.color}, Name: ${value.name}`}}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+
+                                <Popover v-if="selectedLabels.length >= 1" v-model:open="open.labels">
+                                    <PopoverTrigger as-child>
+                                        <SquarePlus />
+                                    </PopoverTrigger>
                                     <PopoverContent class="overflow-hidden p-0" align="start">
-                                        <LabelComponent :open="open" :color-val="colorVal"
-                                            :list="$route.params.cardId" />
+                                        <CardHeader class="mt-2 flex items-center justify-between">
+                                            <div v-show="open.editLabel" class="flex justify-between items-center p-2">
+                                                <ChevronLeft @click="open.editLabel = false"
+                                                    class="cursor-pointer hover:bg-accent" />
+                                                <CardTitle>Edit Label</CardTitle>
+                                            </div>
+                                            <CardTitle v-show="!open.editLabel">Add Label</CardTitle>
+                                            <div @click="open.labels = false"
+                                                class="hover:bg-accent p-2 rounded-lg cursor-pointer">
+                                                <X class="size-4" />
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <LabelComponent :open="open" :color-val="colorVal"
+                                                :list="$route.params.cardId" />
+                                        </CardContent>
+                                        <CardFooter class="mt-4 mb-2 space-x-2 justify-center">
+                                            <Button v-show="!open.editLabel" variant="outline"
+                                                class="font-normal items-center" @click="open.editLabel = true">
+                                                Create Label
+                                            </Button>
+                                        </CardFooter>
                                     </PopoverContent>
                                 </Popover>
-
                             </div>
                         </div>
                         <div class="inline-flex flex-col" v-show="date">
