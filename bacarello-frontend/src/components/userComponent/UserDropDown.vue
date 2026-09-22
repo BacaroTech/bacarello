@@ -16,16 +16,36 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Sun, Moon } from 'lucide-vue-next'
 import { useColorMode } from '@vueuse/core'
 const mode = useColorMode()
-import type { DropDownConfig } from '../layout/Navbar.vue';
+import type { DropDownConfig } from '@/layout/Navbar.vue'
 import { Bell, Ellipsis } from 'lucide-vue-next';
 import { ref } from "vue"
+import Button from '../ui/button/Button.vue'
+import UserLogin from './userLogin.vue'
+import { useUserAuth } from '@/stores/userAuth'
+
 const activePanel = ref("root")
+const auth = useUserAuth()
+const loginModalOpen = ref(false)
+
 defineProps<{ dropDowns: DropDownConfig[] }>()
-function toggleTheme(color: string) {
+function toggleTheme(color: unknown) {
+    if (typeof color !== 'string') return
+
     mode.value = color as "dark" | "auto" | "light"
+}
+
+function handleAuthAction() {
+    if (auth.isAuthenticated) {
+        auth.logoutUser()
+        activePanel.value = "root"
+        return
+    }
+
+    loginModalOpen.value = true
 }
 </script>
 <template>
+    <UserLogin v-model:open="loginModalOpen" />
     <!-- Desktop Right Menu -->
     <div class="hidden md:flex items-center space-x-2 mr-2">
         <Bell :size="18" />
@@ -67,9 +87,12 @@ function toggleTheme(color: string) {
                             </RadioGroup>
                         </DropdownMenuSubContent>
                     </DropdownMenuSub>
-                    <DropdownMenuItem v-else>
+                    <DropdownMenuItem v-else-if="item.id != 'logout'">
                         {{ item.label }}
                     </DropdownMenuItem>
+                    <Button v-if="item.id == 'logout'" class="m-1 w-[calc(100%-0.5rem)]" @click="handleAuthAction">
+                        {{ auth.isAuthenticated ? 'Logout' : 'Log in' }}
+                    </Button>
 
                 </template>
             </DropdownMenuContent>
@@ -102,7 +125,7 @@ function toggleTheme(color: string) {
                             ← Back
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem v-for="item in drop.items" :key="item.id">
+                        <DropdownMenuItem v-for="item in drop.items.filter((item) => item.id !== 'logout')" :key="item.id">
                             <router-link class="flex-1" :to="{ name: item.id, params: { id: 'andrea' } }"
                                 v-if="item?.route">
                                 {{ item.label }}
@@ -110,6 +133,9 @@ function toggleTheme(color: string) {
                             <span v-else>
                                 {{ item.label }}
                             </span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem v-if="drop.items.some((item) => item.id === 'logout')" @select.prevent="handleAuthAction">
+                            {{ auth.isAuthenticated ? 'Logout' : 'Log in' }}
                         </DropdownMenuItem>
                     </template>
                 </template>

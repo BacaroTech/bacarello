@@ -14,7 +14,7 @@ import {
 
 import Input from '@/components/ui/input/Input.vue';
 import Button from '@/components/ui/button/Button.vue';
-import UserDropDown from '../components/UserDropDown.vue';
+import UserDropDown from '@/components/userComponent/UserDropDown.vue';
 import { LayoutGrid, Search } from 'lucide-vue-next';
 
 

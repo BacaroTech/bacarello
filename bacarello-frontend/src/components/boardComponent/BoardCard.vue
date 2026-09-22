@@ -2,14 +2,14 @@
 import draggable from 'vuedraggable'
 import { Plus, X } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
-import type { Task, Column } from '../stores/mainCardList.ts';
-import Button from './ui/button/Button.vue';
+import type { Task, Column } from '../../stores/mainCardList.ts';
+import Button from '../ui/button/Button.vue';
 import { useRouter } from 'vue-router';
 const addNewToggle = ref<string | undefined>()
 const newTaskTitle = ref<string>('')
 const tasksProp = defineProps<{ tasks: Column[] }>()
 import { useCardCheckList, type LabelItem } from '@/stores/card';
-import editInputComponent from './editInputComponent.vue';
+import editInputComponent from '../editInputComponent.vue';
 const { selectedLabels } = useCardCheckList()
 const router = useRouter()
 const emit = defineEmits<{

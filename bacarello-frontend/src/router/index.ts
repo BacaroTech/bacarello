@@ -4,6 +4,14 @@ import AppHome from '@/views/AppHome.vue'
 import Search from '@/views/Search.vue'
 import BoardView from '@/views/BoardView.vue'
 import CardDetail from '@/components/CardDetail.vue'
+import { useUserAuth } from '@/stores/userAuth'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth?: boolean
+  }
+}
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -16,6 +24,7 @@ const router = createRouter({
       path: '/board/:id',
       name: 'board',
       component: BoardView,
+      meta: { requiresAuth: true },
       children: [
         {
           path: 'card/:cardId',
@@ -28,11 +37,13 @@ const router = createRouter({
       path: '/search',
       name: 'search',
       component: Search,
+      meta: { requiresAuth: true },
     },
     {
       path: '/user/:id',
       name: 'user',
       component: UserView,
+      meta: { requiresAuth: true },
       /* children: [
         {
           path: 'profile',
@@ -45,6 +56,18 @@ const router = createRouter({
       ], */
     },
   ],
+})
+
+router.beforeEach((to) => {
+  const auth = useUserAuth()
+
+  if (!to.matched.some((route) => route.meta.requiresAuth)) return true
+  if (auth.checkAuthentication()) return true
+
+  return {
+    name: 'home',
+    query: { auth: 'required', redirect: to.fullPath },
+  }
 })
 
 export default router

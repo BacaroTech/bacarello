@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import * as z from 'zod'
 import { useMediaQuery } from '@vueuse/core'
 import { Button } from '@/components/ui/button'
 import type { BoardView } from '@/stores/board'
-import { useDebounceFn, useEventListener } from '@vueuse/core'
-import {UserRoundSearch} from 'lucide-vue-next'
 import {
     Dialog,
     DialogClose,
@@ -31,21 +29,13 @@ import {
 import { Input } from '@/components/ui/input'
 import {
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
     FormMessage
 } from '@/components/ui/form'
-import {
-    InputGroup,
-    InputGroupAddon,
-    InputGroupText,
-    InputGroupInput,
-    InputGroupTextarea,
-} from '@/components/ui/input-group'
 import { useBoardDataStore } from '@/stores/board'
-const {createBoard} = useBoardDataStore()
+const boardStore = useBoardDataStore()
 const formSchema = toTypedSchema(
     z.object({
         title: z
@@ -54,28 +44,29 @@ const formSchema = toTypedSchema(
             .max(20, 'Board title must be at most 32 characters.'),
         label: z
             .string()
-            .min(2, 'Label must be at least 20 characters.')
-            .max(20, 'Label must be at most 100 characters.'),
-        owner: z
-            .string()
-            .min(1, 'Search For A owner')
-            .max(20, 'Search For A owner')
+            .min(2, 'Label must be at least 2 characters.')
+            .max(20, 'Label must be at most 20 characters.'),
     }),
 )
-const { values, handleSubmit, resetForm } = useForm<BoardView>({
+const { handleSubmit, resetForm } = useForm<BoardView>({
     validationSchema: formSchema,
     initialValues: {
         title: '',
         label: '',
     },
 })
-const onSubmit = handleSubmit((data: BoardView) => {
-    data['id'] = 3
-    createBoard(data)
+const isSubmitting = ref(false)
+const onSubmit = handleSubmit(async (data: BoardView) => {
+    isSubmitting.value = true
+
+    try {
+        await boardStore.createBoard(data)
+        resetForm()
+        open.value = false
+    } finally {
+        isSubmitting.value = false
+    }
 })
-const debouncedFn = useDebounceFn(() => {
-    console.log(values.owner)
-}, 1000, { maxWait: 5000 })
 const isDesktop = useMediaQuery('(min-width: 640px)')
 
 const Modal = computed(() => ({
@@ -115,6 +106,9 @@ const open = ref(false)
             <div class="flex items-center gap-2">
                 <div class="grid flex-1 gap-2">
                     <form id="form-vee-demo" @submit="onSubmit" class="space-y-6">
+                        <p v-if="boardStore.boardError" class="text-sm text-destructive">
+                            {{ boardStore.boardError }}
+                        </p>
                         <FormField v-slot="{ componentField }" name="title">
                             <FormItem>
                                 <FormLabel>Board Title</FormLabel>
@@ -135,22 +129,8 @@ const open = ref(false)
                                 <FormMessage />
                             </FormItem>
                         </FormField>
-                        <FormField v-slot="{ componentField }" name="owner">
-                            <FormItem>
-                                <FormLabel>Board Owner</FormLabel>
-                                <FormControl>
-                                    <InputGroup>
-                                        <InputGroupInput v-bind="componentField" @input="() => {debouncedFn()}" />
-                                        <InputGroupAddon>
-                                            <UserRoundSearch />
-                                        </InputGroupAddon>
-                                    </InputGroup>
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        </FormField>
-                        <Button type="submit" form="form-vee-demo">
-                            Submit
+                        <Button type="submit" form="form-vee-demo" :disabled="isSubmitting">
+                            {{ isSubmitting ? 'Creating...' : 'Submit' }}
                         </Button>
                     </form>
                 </div>

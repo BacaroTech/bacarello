@@ -14,9 +14,11 @@
 
 export interface Board {
   id: string
+  workspaceId?: number
   title: string
   /** Sottotitolo/etichetta libera (frontend BoardView.label). */
   label?: string | null
+  color?: string | null
   /** Id utente proprietario. */
   owner?: string | null
 }
@@ -24,6 +26,13 @@ export interface Board {
 export interface BoardDetail extends Board {
   lists: ListWithCards[]
   labels: Label[]
+}
+
+export interface Workspace {
+  id: number
+  name: string
+  ownerId: number
+  createdAt?: string | null
 }
 
 export interface List {
@@ -86,8 +95,13 @@ export interface ChecklistItem {
 // ───────────────────────── Request bodies ──────────────────────────
 
 export interface CreateBoardRequest {
+  workspaceId: number
   title: string
-  label?: string | null
+  color: string
+}
+
+export interface CreateWorkspaceRequest {
+  name: string
 }
 
 export type UpdateBoardRequest = Partial<Pick<Board, 'title' | 'label'>>
